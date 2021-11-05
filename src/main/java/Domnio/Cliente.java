@@ -6,7 +6,6 @@
 package Domnio;
 
 import java.sql.Date;
-import java.time.LocalDate;
 
 /**
  *
@@ -84,9 +83,14 @@ public class Cliente {
     }
     
     
-    
+    /**
+    *
+    * Método que verifíca que el cliente sea mayor de edad
+    * @param fecha la fecha de nacimiento del cliente
+    * @return devielve si es mayor de edad o no
+    */
     public boolean esMayorDeEdad(Date fecha){
-        Date fechaTope = Date.valueOf("2003-11-12");
+        Date fechaTope = Date.valueOf("2003-11-15");
         if(fecha.before(fechaTope)){
             return true;
         }else{
@@ -94,6 +98,12 @@ public class Cliente {
         }
     }
     
+    /**
+    *
+    * Método que comprueba si el dni introducido es válido utilizando dos métodos creados también por nosotros
+    * @param dni introducido por el cliente
+    * @return devuelve si el dni es válido o no
+    */
     public boolean validarDNI(String dni){
         if(dni.length()!=9){
             return false;
@@ -106,6 +116,12 @@ public class Cliente {
         }
     }
 
+    /**
+    *
+    * Método que comprueba si el dni tiene 8 números como primeros caracteres
+    * @param dni introducido por el cliente
+    * @return devuelve true si los primeros 8 caracteres son múmeros
+    */
     private boolean soloNumeros(String dni){
         String numero = "";
         String miDNI = "";
@@ -128,6 +144,12 @@ public class Cliente {
         }
     }
     
+    /**
+    *
+    * Método que comprueba si el último carácter es letra
+    * @param dni introducido por el cliente
+    * @return devielve true si el último caracter es una letra
+    */
     private boolean esLetra(String dni) {
         char letra = dni.charAt(8);
 
