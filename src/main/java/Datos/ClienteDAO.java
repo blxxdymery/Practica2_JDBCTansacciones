@@ -7,6 +7,7 @@ package Datos;
 
 import static Datos.Conexion.*;
 import Domnio.Cliente;
+import Domnio.EWallet;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -26,6 +27,14 @@ public class ClienteDAO {
     private static final String SQL_DELETE = "DELETE FROM clientes WHERE dni=?";
     private static final String SQL_SELECT_DNI = "SELECT * FROM clientes where dni = ?";
     //private static final String SQL_DELETE2 = "DELETE p.*, c.* FROM propietarios p LEFT JOIN coches c ON p.dni = c.dni WHERE p.dni=?";
+    private Connection conexionTransaccional;
+    
+    public ClienteDAO(){}
+    
+    public ClienteDAO(Connection conexionTransanccional){
+        this.conexionTransaccional = conexionTransanccional;
+    }
+    
     
     /**
     * Método para consultas de select simples en propietarios
@@ -67,30 +76,39 @@ public class ClienteDAO {
     * Método para insertar un propietario
     * @param cliente a insertar
     * @return el numero de registros
+     * @throws java.sql.SQLException
     */
-    public int insertar(Cliente cliente){
+    public int insertar(Cliente cliente) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
+        EWallet ewallet;
         
         try{
-            con = Conexion.getConnection();
+            con = this.conexionTransaccional != null ?
+                this.conexionTransaccional : Conexion.getConnection();
+            con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_INSERT);
             stm.setString(1, cliente.getDni());
             stm.setString(2, cliente.getNombre());
             stm.setString(3, cliente.getApellidos());
             stm.setDate(4, cliente.getFechaNacimiento());
             stm.setString(5, cliente.getEmail());
+            
+            ewallet = new EWallet(cliente.getDni());
+            stm = con.prepareStatement(EWalletDAO.SQL_INSERT);
+            stm.setString(1, ewallet.getDni());
             registros = stm.executeUpdate();
-        }catch(SQLException e){
-            e.printStackTrace(System.out);
+            con.commit();
+            con.rollback();
         }finally{
             try{
-                close(stm);
+                Conexion.close(stm);
             }catch(SQLException e){
                 e.printStackTrace(System.out);
             }try{
-                close(con);
+                if(this.conexionTransaccional == null)
+                    Conexion.close(con);
             }catch(SQLException e){
                  e.printStackTrace(System.out);
             }
@@ -102,14 +120,17 @@ public class ClienteDAO {
     * Método para actualizar los datos de un propietario de la tabla
     * @param cliente
     * @return el numero de registros
+     * @throws java.sql.SQLException
     */
-    public int actualizar(Cliente cliente){
+    public int actualizar(Cliente cliente) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         
         try{
-            con = Conexion.getConnection();
+            con = this.conexionTransaccional != null ?
+                this.conexionTransaccional : Conexion.getConnection();
+            con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_UPDATE);
             stm.setString(1, cliente.getDni());
             stm.setString(2, cliente.getNombre());
@@ -117,13 +138,13 @@ public class ClienteDAO {
             stm.setDate(4, cliente.getFechaNacimiento());
             stm.setString(5, cliente.getEmail());
             registros = stm.executeUpdate();
-        }catch(SQLException e){
-            e.printStackTrace(System.out);
-        }
-        finally{
+            con.commit();
+            con.rollback();
+        }finally{
             try {
-                close(stm);
-                close(con);
+                Conexion.close(stm);
+                if(this.conexionTransaccional == null)
+                    Conexion.close(con);
             } catch (SQLException ex) {
                 ex.printStackTrace(System.out);
             }
@@ -135,23 +156,26 @@ public class ClienteDAO {
     * Método para eliminar un propietario de la tabla junto a sus coches
     * @param cliente
     * @return el numero de registros
+     * @throws java.sql.SQLException
     */
-    public int eliminar(Cliente cliente){
+    public int eliminar(Cliente cliente) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         try {
-            con = getConnection();
+            con = this.conexionTransaccional != null ?
+                this.conexionTransaccional : Conexion.getConnection();
+            con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_DELETE);
                   stm.setString(1, cliente.getDni());      
             registros = stm.executeUpdate();
-        } catch (SQLException ex) {
-            ex.printStackTrace(System.out);
-        }
-        finally{
+            con.commit();
+            con.rollback();
+        }finally{
             try {
-                close(stm);
-                close(con);
+                Conexion.close(stm);
+                if(this.conexionTransaccional == null)
+                    Conexion.close(con);
             } catch (SQLException ex) {
                 ex.printStackTrace(System.out);
             }
