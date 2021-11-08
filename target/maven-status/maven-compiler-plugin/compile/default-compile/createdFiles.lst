@@ -1,4 +1,5 @@
 Datos\Conexion.class
-Domnio\Cliente.class
 Test\TestManejo.class
 Datos\ClienteDAO.class
+Datos\ProductoDAO.class
+Domnio\Cliente.class

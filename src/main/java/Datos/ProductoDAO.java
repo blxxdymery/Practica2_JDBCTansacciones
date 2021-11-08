@@ -6,7 +6,6 @@
 package Datos;
 
 import static Datos.Conexion.getConnection;
-import Domnio.EWallet;
 import Domnio.Producto;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,30 +18,31 @@ import java.util.List;
  *
  * @author maria
  */
-public class EWalletDAO {
-    private static final String SQL_SELECT = "SELECT * FROM ewallets";
-    static final String SQL_INSERT = "INSERT INTO ewallets (dni, saldo, puntos) VALUES (?,?,?)";
-    private static final String SQL_UPDATE = "UPDATE ewallets SET dni=?, saldo=?, puntos=? WHERE dni=?";
-    private static final String SQL_DELETE = "DELETE FROM ewallets WHERE dni=?";
-    
+public class ProductoDAO {
+    private static final String SQL_SELECT = "SELECT * FROM productos";
+    private static final String SQL_INSERT = "INSERT INTO productos (nombre, precio, valorPuntos, stock) VALUES (?,?,?,?)";
+    private static final String SQL_UPDATE = "UPDATE productos SET nombre=?, precio=?, valorPuntos=?, stock=?"; //WHERE nombre=?
+    private static final String SQL_DELETE = "DELETE FROM productos WHERE nombre=?";
+    private static final String SQL_UPDATE_STOCK = "UPDATE productos SET stock=?";
     private Connection conexionTransaccional;
     
-    public EWalletDAO(){}
+    public ProductoDAO(){}
     
-    public EWalletDAO(Connection conexionTransanccional){
+    public ProductoDAO(Connection conexionTransanccional){
         this.conexionTransaccional = conexionTransanccional;
     }
+    
     /**
     * Método para consultas de select simples en propietarios
     * @return la lista de propietarios que devuelve la consulta
     * @throws java.sql.SQLException 
     */
-    public List<EWallet> seleccionar() throws SQLException{
+    public List<Producto> seleccionar() throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         ResultSet rs = null;
-        EWallet ewallet = null;
-        List<EWallet> ewallets = new ArrayList<>();
+        Producto producto = null;
+        List<Producto> productos = new ArrayList<>();
         
         try{
             con = getConnection();
@@ -50,11 +50,12 @@ public class EWalletDAO {
             rs = stm.executeQuery();
             
             while(rs.next()){
-                String dni = rs.getString("dni");
-                double saldo = rs.getDouble("saldo");
-                int puntos = rs.getInt("puntos");     
-                ewallet = new EWallet(dni, saldo, puntos);
-                ewallets.add(ewallet);
+                String nombre = rs.getString("nombre");
+                double precio = rs.getDouble("precio");
+                int valorPuntos = rs.getInt("valorPuntos");
+                int stock = rs.getInt("stock");
+                producto = new Producto(nombre, precio, valorPuntos, stock);
+                productos.add(producto);
             }
         }catch(SQLException e){
             e.printStackTrace(System.out);
@@ -63,31 +64,32 @@ public class EWalletDAO {
             Conexion.close(rs);
             Conexion.close(stm);
         }
-        return ewallets;
+        return productos;
     }
     
-    //REVISAR
     /**
     * Método para insertar un propietario
-     * @param ewallet
+     * @param producto
     * @return el numero de registros
      * @throws java.sql.SQLException
     */
-    public int insertar(EWallet ewallet) throws SQLException{
+    public int insertar(Producto producto) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
-        String dni;
         
         try{
             con = this.conexionTransaccional != null ?
                 this.conexionTransaccional : Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_INSERT);
-            stm.setString(1, ewallet.getDni());
+            stm.setString(1, producto.getNombre());
+            stm.setDouble(2, producto.getPrecio());
+            stm.setInt(3, producto.getValorPuntos());
+            stm.setInt(4, producto.getStock());
             registros = stm.executeUpdate();
             con.commit();
-            con.rollback();         
+            con.rollback();
         }finally{
             try{
                 Conexion.close(stm);
@@ -105,11 +107,11 @@ public class EWalletDAO {
     
     /**
     * Método para actualizar los datos de un propietario de la tabla
-     * @param ewallet
+     * @param producto
     * @return el numero de registros
      * @throws java.sql.SQLException
     */
-    public int actualizar(EWallet ewallet) throws SQLException{
+    public int actualizar(Producto producto) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
@@ -119,9 +121,36 @@ public class EWalletDAO {
                 this.conexionTransaccional : Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_UPDATE);
-            stm.setString(1, ewallet.getDni());
-            stm.setDouble(2, ewallet.getSaldo());
-            stm.setInt(3, ewallet.getPuntos());
+            stm.setString(1, producto.getNombre());
+            stm.setDouble(2, producto.getPrecio());
+            stm.setInt(3, producto.getValorPuntos());
+            stm.setInt(4, producto.getStock());
+            registros = stm.executeUpdate();
+            con.commit();
+            con.rollback();
+        }finally{
+            try {
+                Conexion.close(stm);
+                if(this.conexionTransaccional == null)
+                    Conexion.close(con);
+            } catch (SQLException ex) {
+                ex.printStackTrace(System.out);
+            }
+        }
+        return registros;
+    }
+    
+    public int actualizarStock(Producto producto) throws SQLException, Exception{
+        Connection con = null;
+        PreparedStatement stm = null;
+        int registros = 0;
+        
+        try{
+            con = this.conexionTransaccional != null ?
+                this.conexionTransaccional : Conexion.getConnection();
+            con.setAutoCommit(false);
+            stm = con.prepareStatement(SQL_UPDATE_STOCK);
+            stm.setInt(1, producto.restarStock(producto));
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();
@@ -139,11 +168,11 @@ public class EWalletDAO {
     
     /**
     * Método para eliminar un propietario de la tabla junto a sus coches
-     * @param ewallet
+     * @param producto
     * @return el numero de registros
      * @throws java.sql.SQLException
     */
-    public int eliminar(EWallet ewallet) throws SQLException{
+    public int eliminar(Producto producto) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
@@ -152,7 +181,7 @@ public class EWalletDAO {
                 this.conexionTransaccional : Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_DELETE);
-                  stm.setString(1, ewallet.getDni());      
+                  stm.setString(1, producto.getNombre());  
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();
@@ -166,17 +195,7 @@ public class EWalletDAO {
             }
         }
         return registros;
-    }
-    
-    public void comprarProducto(EWallet ewallet, Producto producto) throws Exception{
-        if(ewallet.getSaldo()<producto.getPrecio()){
-            throw new Exception("El saldo de la E-Wallet es menor al precio del producto");
-        }else{
-            ewallet.setSaldo(ewallet.getSaldo()-producto.getPrecio());
-            ewallet.setPuntos(ewallet.getPuntos()+producto.getValorPuntos());
-            producto.restarStock(producto);
-            //PRODUCTO DAO??
-            System.out.println("Producto comprado, se han actualizado los datos de su E-Wallet.");
-        }
-    }
+    } 
+ 
 }
+

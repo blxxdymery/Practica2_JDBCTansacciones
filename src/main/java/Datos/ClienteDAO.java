@@ -182,39 +182,5 @@ public class ClienteDAO {
         }
         return registros;
     }
-    
-    static public boolean ComprobarDni(String dniC){
-        Connection con = null;
-        PreparedStatement stm = null;
-        ResultSet rs = null;
-        boolean esIgual = false;
-        try{
-            con = Conexion.getConnection();
-            stm = con.prepareStatement(SQL_SELECT_DNI);
-            rs = stm.executeQuery();
-            
-            while(rs.next()){
-                String dni = rs.getString("dni");
-                if(dniC.equals(dni)){
-                    esIgual = true;
-                    break;
-                }else if (!dniC.equals(dni)){
-                    esIgual = false; 
-                }
-            }
-        }catch(SQLException e){
-            e.printStackTrace(System.out);
-        }finally{
-            try{
-                close(stm);
-            }catch(SQLException e){
-                e.printStackTrace(System.out);
-            }try{
-                close(con);
-            }catch(SQLException e){
-                 e.printStackTrace(System.out);
-            }
-        }   
-        return esIgual;
-    }
+   
 }

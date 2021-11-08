@@ -11,17 +11,23 @@ package Domnio;
  */
 public class Producto {
     private String nombre;
+    private double precio;
     private int valorPuntos;
     private int stock;
 
-    public Producto(String nombre, int valorPuntos, int stock) {
+    public Producto(String nombre, double precio, int valorPuntos, int stock) {
         this.nombre = nombre;
+        this.precio = precio;
         this.valorPuntos = valorPuntos;
         this.stock = stock;
     }
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public void setPrecio(double precio) {
+        this.precio = precio;
     }
 
     public void setValorPuntos(int valorPuntos) {
@@ -36,6 +42,10 @@ public class Producto {
         return nombre;
     }
 
+    public double getPrecio() {
+        return precio;
+    }
+    
     public int getValorPuntos() {
         return valorPuntos;
     }
@@ -46,6 +56,15 @@ public class Producto {
 
     @Override
     public String toString() {
-        return "Producto{" + "nombre=" + nombre + ", valorPuntos=" + valorPuntos + ", stock=" + stock + '}';
+        return "Producto{" + "nombre=" + nombre + ", precio=" + precio + ", valorPuntos=" + valorPuntos + ", stock=" + stock + '}';
+    }
+    
+    public int restarStock(Producto p) throws Exception{
+        if(p.getStock()<=0){
+             throw new Exception("No hay suficiente stock en el almacén");
+        }else{
+            int nuevoStock = p.getStock()-1;
+            return nuevoStock;
+        }
     }
 }
