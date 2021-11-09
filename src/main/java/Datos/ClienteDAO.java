@@ -98,9 +98,12 @@ public class ClienteDAO {
             ewallet = new EWallet(cliente.getDni());
             stm = con.prepareStatement(EWalletDAO.SQL_INSERT);
             stm.setString(1, ewallet.getDni());
+            stm.setDouble(2, ewallet.getSaldo());
+            stm.setInt(3, ewallet.getPuntos());
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();
+            System.out.println("Se ha registrado como cliente correctamente");
         }finally{
             try{
                 Conexion.close(stm);

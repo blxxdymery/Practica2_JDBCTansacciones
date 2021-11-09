@@ -59,12 +59,17 @@ public class Producto {
         return "Producto{" + "nombre=" + nombre + ", precio=" + precio + ", valorPuntos=" + valorPuntos + ", stock=" + stock + '}';
     }
     
-    public int restarStock(Producto p) throws Exception{
+    public static int restarStock(Producto p) throws Exception{
         if(p.getStock()<=0){
              throw new Exception("No hay suficiente stock en el almacén");
         }else{
             int nuevoStock = p.getStock()-1;
             return nuevoStock;
         }
+    }
+    
+    public static int sumarStock(Producto p) throws Exception{
+        int nuevoStock = p.getStock()+1;
+        return nuevoStock;
     }
 }
