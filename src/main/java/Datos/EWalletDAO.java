@@ -5,7 +5,7 @@
  */
 package Datos;
 
-import static Datos.Conexion.getConnection;
+import static Datos.Conexion.*;
 import Domnio.EWallet;
 import Domnio.Producto;
 import java.sql.Connection;
@@ -25,7 +25,7 @@ import java.util.List;
 public class EWalletDAO {
     private static final String SQL_SELECT = "SELECT * FROM ewallets";
     static final String SQL_INSERT = "INSERT INTO ewallets (dni, saldo, puntos) VALUES (?,?,?)";
-    private static final String SQL_UPDATE = "UPDATE ewallets SET dni=?, saldo=?, puntos=? WHERE dni=?";
+    private static final String SQL_UPDATE = "UPDATE ewallets SET saldo=?, puntos=? WHERE dni=?";
     private static final String SQL_DELETE = "DELETE FROM ewallets WHERE dni=?";
     
     private Connection conexionTransaccional;
@@ -76,65 +76,61 @@ public class EWalletDAO {
     * @return el numero de registros
      * @throws java.sql.SQLException
     */
-    public int insertar(EWallet ewallet) throws SQLException{
+    public static int insertar(EWallet ewallet){
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         String dni;
         
         try{
-            con = this.conexionTransaccional != null ?
-                this.conexionTransaccional : Conexion.getConnection();
+            con = Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_INSERT);
             stm.setString(1, ewallet.getDni());
             stm.setDouble(2, ewallet.getSaldo());
             stm.setInt(3, ewallet.getPuntos());
-            registros = stm.executeUpdate();
-            con.commit();
-            con.rollback();         
-        }finally{
-            try{
-                Conexion.close(stm);
-            }catch(SQLException e){
-                e.printStackTrace(System.out);
-            }try{
-                if(this.conexionTransaccional == null)
-                    Conexion.close(con);
-            }catch(SQLException e){
-                 e.printStackTrace(System.out);
+            registros = stm.executeUpdate();         
+        }catch(SQLException e){
+            e.printStackTrace(System.out);
+        }
+        finally{
+            try {
+                close(stm);
+                close(con);
+            } catch (SQLException ex) {
+                ex.printStackTrace(System.out);
             }
-        }   
+        }
         return registros; 
     }
     
-    /**
+    /**            con.setAutoCommit(false);
+
     * Método para actualizar los datos de un propietario de la tabla
      * @param ewallet
     * @return el numero de registros
-     * @throws java.sql.SQLException
     */
-    public int actualizar(EWallet ewallet) throws SQLException{
+    public int actualizar(EWallet ewallet){
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         
         try{
-            con = this.conexionTransaccional != null ?
-                this.conexionTransaccional : Conexion.getConnection();
-            con.setAutoCommit(false);
-            stm = con.prepareStatement(SQL_UPDATE);
-            stm.setString(1, ewallet.getDni());
-            stm.setDouble(2, ewallet.getSaldo());
-            stm.setInt(3, ewallet.getPuntos());
+            con = Conexion.getConnection();
+            stm = con.prepareStatement(SQL_UPDATE);        
+            stm.setDouble(1, ewallet.getSaldo());
+            stm.setInt(2, ewallet.getPuntos());
+            stm.setString(3, ewallet.getDni());
             registros = stm.executeUpdate();
-            con.commit();
-            con.rollback();
-        }finally{
+            //con.commit();
+            //con.rollback();
+        }catch(SQLException e){
+            e.printStackTrace(System.out);
+        }
+        finally{
             try {
-                Conexion.close(stm);
-                if(this.conexionTransaccional == null)
-                    Conexion.close(con);
+                close(stm);
+                close(con);
             } catch (SQLException ex) {
                 ex.printStackTrace(System.out);
             }
@@ -157,7 +153,7 @@ public class EWalletDAO {
                 this.conexionTransaccional : Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_DELETE);
-                  stm.setString(1, ewallet.getDni());      
+            stm.setString(1, ewallet.getDni());      
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();
@@ -188,6 +184,10 @@ public class EWalletDAO {
         LocalDate currentDate = LocalDate.parse(date.toString());
         int day = currentDate.getDayOfMonth();
         return day;
+    }
+
+    public void ingresarDinero(double dIngreso, EWallet ewallet, java.util.Date fechaActual) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
  
 }

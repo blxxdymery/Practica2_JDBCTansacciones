@@ -5,6 +5,7 @@
  */
 package Datos;
 
+import static Datos.Conexion.close;
 import static Datos.Conexion.getConnection;
 import Domnio.Producto;
 import java.sql.Connection;
@@ -20,11 +21,12 @@ import java.util.List;
  */
 public class ProductoDAO {
     private static final String SQL_SELECT = "SELECT * FROM productos";
+    private static final String SQL_SELECT_NOMBRE = "SELECT nombre FROM productos";
     private static final String SQL_INSERT = "INSERT INTO productos (nombre, precio, valorPuntos, stock) VALUES (?,?,?,?)";
-    private static final String SQL_UPDATE = "UPDATE productos SET nombre=?, precio=?, valorPuntos=?, stock=?"; //WHERE nombre=?
+    private static final String SQL_UPDATE = "UPDATE productos SET precio=?, valorPuntos=?, stock=? WHERE nombre=?";
     private static final String SQL_DELETE = "DELETE FROM productos WHERE nombre=?";
-    private static final String SQL_UPDATE_STOCK = "UPDATE productos SET stock=?";
     private Connection conexionTransaccional;
+    
     
     public ProductoDAO(){}
     
@@ -65,6 +67,32 @@ public class ProductoDAO {
             Conexion.close(stm);
         }
         return productos;
+    }
+    
+    public List<String> seleccionarNombre() throws SQLException{
+        Connection con = null;
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+        Producto producto = null;
+        List<String> nombreProductos = new ArrayList<>();
+        
+        try{
+            con = getConnection();
+            stm = con.prepareStatement(SQL_SELECT_NOMBRE);
+            rs = stm.executeQuery();
+            
+            while(rs.next()){
+                String nombre = rs.getString("nombre");
+                nombreProductos.add(nombre);
+            }
+        }catch(SQLException e){
+            e.printStackTrace(System.out);
+        }finally{
+            Conexion.close(con);
+            Conexion.close(rs);
+            Conexion.close(stm);
+        }
+        return nombreProductos;
     }
     
     /**
@@ -109,61 +137,34 @@ public class ProductoDAO {
     * Método para actualizar los datos de un propietario de la tabla
      * @param producto
     * @return el numero de registros
-     * @throws java.sql.SQLException
     */
-    public int actualizar(Producto producto) throws SQLException{
+    public int actualizar(Producto producto){
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         
         try{
-            con = this.conexionTransaccional != null ?
-                this.conexionTransaccional : Conexion.getConnection();
+            con = Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_UPDATE);
-            stm.setString(1, producto.getNombre());
-            stm.setDouble(2, producto.getPrecio());
-            stm.setInt(3, producto.getValorPuntos());
-            stm.setInt(4, producto.getStock());
+            stm.setDouble(1, producto.getPrecio());
+            stm.setInt(2, producto.getValorPuntos());
+            stm.setInt(3, producto.getStock());
+            stm.setString(4, producto.getNombre());
             registros = stm.executeUpdate();
-            con.commit();
-            con.rollback();
-        }finally{
+            
+        }catch(SQLException e){
+            e.printStackTrace(System.out);
+        }
+        finally{
             try {
-                Conexion.close(stm);
-                if(this.conexionTransaccional == null)
-                    Conexion.close(con);
+                close(stm);
+                close(con);
             } catch (SQLException ex) {
                 ex.printStackTrace(System.out);
             }
         }
-        return registros;
-    }
-    
-    public int actualizarStock(Producto producto) throws SQLException, Exception{
-        Connection con = null;
-        PreparedStatement stm = null;
-        int registros = 0;
-        
-        try{
-            con = this.conexionTransaccional != null ?
-                this.conexionTransaccional : Conexion.getConnection();
-            con.setAutoCommit(false);
-            stm = con.prepareStatement(SQL_UPDATE_STOCK);
-            stm.setInt(1, producto.restarStock(producto));
-            registros = stm.executeUpdate();
-            con.commit();
-            con.rollback();
-        }finally{
-            try {
-                Conexion.close(stm);
-                if(this.conexionTransaccional == null)
-                    Conexion.close(con);
-            } catch (SQLException ex) {
-                ex.printStackTrace(System.out);
-            }
-        }
-        return registros;
+        return registros; 
     }
     
     /**

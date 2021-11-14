@@ -20,15 +20,10 @@ public class Transaccion {
     public Transaccion() {
     }
 
-    public Transaccion(int id, String dni, String nombreProducto, Date fecha) {
-        this.id = id;
+    public Transaccion(String dni, String nombreProducto, Date fecha) {
         this.dni = dni;
         this.nombreProducto = nombreProducto;
         this.fecha = fecha;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public void setDni(String dni) {

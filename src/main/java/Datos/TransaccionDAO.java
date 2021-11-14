@@ -10,7 +10,7 @@ import Domnio.EWallet;
 import Domnio.Producto;
 import Domnio.Transaccion;
 import java.sql.Connection;
-import java.sql.Date;
+import java.util.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,7 +24,7 @@ import java.util.List;
 public class TransaccionDAO {
     private static final String SQL_SELECT = "SELECT * FROM transacciones";
     static final String SQL_INSERT = "INSERT INTO transacciones (id, dni, nombreProducto, fecha) VALUES (?,?,?, ?)";
-    private static final String SQL_UPDATE = "UPDATE transacciones SET id=?, dni=?, nombreProducto=?, fecha=? WHERE dni=?";
+    private static final String SQL_UPDATE = "UPDATE transacciones SET dni=?, nombreProducto=?, fecha=? WHERE id=?";
     private static final String SQL_DELETE = "DELETE FROM transacciones WHERE id=?";
     
     private Connection conexionTransaccional;
@@ -56,7 +56,7 @@ public class TransaccionDAO {
                 String dni = rs.getString("dni");
                 String nombreProducto = rs.getString("nombreProducto");
                 Date fecha = rs.getDate("fecha");     
-                transaccion = new Transaccion(id, dni, nombreProducto, fecha);
+                transaccion = new Transaccion(dni, nombreProducto, (java.sql.Date) fecha);
                 transacciones.add(transaccion);
             }
         }catch(SQLException e){
@@ -89,7 +89,7 @@ public class TransaccionDAO {
             stm.setInt(1, transaccion.getId());
             stm.setString(2, transaccion.getDni());
             stm.setString(3, transaccion.getNombreProducto());
-            stm.setDate(4, transaccion.getFecha());
+            stm.setDate(4, (java.sql.Date)transaccion.getFecha());
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();         
@@ -124,10 +124,10 @@ public class TransaccionDAO {
                 this.conexionTransaccional : Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_UPDATE);
-            stm.setInt(1, transaccion.getId());
-            stm.setString(2, transaccion.getDni());
-            stm.setString(3, transaccion.getNombreProducto());
-            stm.setDate(4, transaccion.getFecha());
+            stm.setString(1, transaccion.getDni());
+            stm.setString(2, transaccion.getNombreProducto());
+            stm.setDate(3, transaccion.getFecha());
+            stm.setInt(4, transaccion.getId());
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();
@@ -174,45 +174,43 @@ public class TransaccionDAO {
         return registros;
     }
 
-    public void comprarProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao) throws Exception{
+    //PONER COMMIT
+    //acciones 1incrementar puntos 2.bajar euros 3. implementar stock, despues: commit
+    //se puede comprar mas de 1 art del mismo producto
+    public void comprarProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad) throws Exception{
         int nuevoStock;
         if(ewallet.getSaldo()<producto.getPrecio()){
             throw new Exception("El saldo de la E-Wallet es menor al precio del producto");
         }else{
-            ewallet.setSaldo(ewallet.getSaldo()-producto.getPrecio());
-            ewallet.setPuntos(ewallet.getPuntos()+producto.getValorPuntos());
-            nuevoStock = Producto.restarStock(producto);
-            producto.setStock(nuevoStock);
+            ewallet.setSaldo((ewallet.getSaldo()-(producto.getPrecio()*cantidad)));
+            ewallet.setPuntos((ewallet.getPuntos()+(producto.getValorPuntos()*cantidad)));
+            producto.setStock((producto.getStock()-cantidad));
             ewalletDao.actualizar(ewallet);
             productoDao.actualizar(producto);
-            System.out.println("Producto comprado, se han actualizado los datos de su E-Wallet.");
+            //se quitan los commits de los actualizar y se pone en el main
         }
     }
 
     
-    public void devolverProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao) throws Exception{
-        int nuevoStock;
-        ewallet.setSaldo(ewallet.getSaldo()+producto.getPrecio());
-        ewallet.setPuntos(ewallet.getPuntos()-producto.getValorPuntos());
-        nuevoStock = Producto.sumarStock(producto);
-        producto.setStock(nuevoStock);
+    public void devolverProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad){
+        ewallet.setSaldo((ewallet.getSaldo()+(producto.getPrecio()*cantidad)));
+        ewallet.setPuntos((ewallet.getPuntos()-(producto.getValorPuntos()*cantidad)));
+        producto.setStock((producto.getStock()+cantidad));
         ewalletDao.actualizar(ewallet);
         productoDao.actualizar(producto);
-        System.out.println("Producto devuelto, se han actualizado los datos de su E-Wallet.");
+        
     }
     
-    public void comprarConPuntos(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao) throws Exception{
-        int nuevoStock;
+    public void comprarConPuntos(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad) throws Exception{
         double precioProducto = producto.getPrecio();
         if(ewallet.getPuntos()<producto.getValorPuntos() || precioProducto<5){
             throw new Exception("Error en la compra. No tienes suficientes puntos o el precio del producto es demasiado bajo.");
         }else{
-            ewallet.setPuntos(ewallet.getPuntos()-producto.getValorPuntos());
-            nuevoStock = Producto.restarStock(producto);
-            producto.setStock(nuevoStock);
+            ewallet.setPuntos((ewallet.getPuntos()-(producto.getValorPuntos()*cantidad)));
+            producto.setStock((producto.getStock()-cantidad));
             ewalletDao.actualizar(ewallet);
             productoDao.actualizar(producto);
-            System.out.println("Producto comprado con puntos, se han actualizado los datos de su E-Wallet.");
+            
         }
     }
 }

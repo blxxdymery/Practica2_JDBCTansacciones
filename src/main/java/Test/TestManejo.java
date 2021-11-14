@@ -15,10 +15,11 @@ import Domnio.EWallet;
 import Domnio.Producto;
 import Domnio.Transaccion;
 import java.sql.Connection;
-import java.sql.Date;
+import java.util.Date;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -28,16 +29,22 @@ import java.util.Scanner;
  * @author maria
  */
 public class TestManejo {
-    
+
     public static void main(String[] args) throws Exception {
         Connection conexion = null;
         
-        try{
+        try {
             conexion = Conexion.getConnection();
-            if(conexion.getAutoCommit()){
+            if (conexion.getAutoCommit()) {
                 conexion.setAutoCommit(false);
             }
-            
+
+            Cliente cliente = null;
+            String dni = null;
+            EWallet ewallet = null;
+            Producto producto = null;
+            Transaccion transaccion = null;
+
             ClienteDAO clienteDao = new ClienteDAO(conexion);
             ProductoDAO productoDao = new ProductoDAO(conexion);
             EWalletDAO ewalletDao = new EWalletDAO(conexion);
@@ -46,133 +53,277 @@ public class TestManejo {
             List<Cliente> clientes = clienteDao.seleccionar();
             List<EWallet> ewallets = ewalletDao.seleccionar();
             List<Producto> productos = productoDao.seleccionar();
+            List<String> nombreProductos = productoDao.seleccionarNombre();
             List<Transaccion> transacciones = transaccionDao.seleccionar();
 
             //MENÚ CON OPERACIONES
             Scanner teclado = new Scanner(System.in);
-            teclado.useDelimiter("-");
-            DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+            LocalDateTime myDateObj = LocalDateTime.now();  
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = new Date();
+            long timeInMilliSeconds = date.getTime();
+            java.sql.Date fechaActual = new java.sql.Date(timeInMilliSeconds);
             int op;
-        
+
             do {
                 System.out.println("BIENVENIDO A SUPERCOMPRÍN");
                 System.out.println("¿Qué quiere hacer?");
-                System.out.println("1. Operaciones de cliente");
-                System.out.println("2. Operaciones de administrador");
+                System.out.println("1. Registrarse como Cliente");
+                System.out.println("2. Acceder a su portal de Cliente");
                 System.out.println("3. Salir");
-
                 op = teclado.nextInt();
                 teclado.nextLine();
-                System.out.println();
+
                 switch (op) {
                     case 1:
+                        System.out.println("Introduzca su dni");
+                        dni = teclado.nextLine();
+                        System.out.println("Introduzca su nombre");
+                        String nombre = teclado.nextLine();
+                        System.out.println("Introduzca sus apellidos");
+                        String apellidos = teclado.nextLine();
+                        System.out.println("Introduzca su fecha de nacimiento (yyyy-MM-dd)");
+                        String sFecha = teclado.nextLine();
+                        sFecha = simpleDateFormat.format(date);
+                        java.sql.Date fechaN = java.sql.Date.valueOf(sFecha);
+
+                        System.out.println("Introduzca su email");
+                        String email = teclado.nextLine();
+                        cliente = new Cliente(dni, nombre, apellidos, fechaN, email);
+                        ewallet = new EWallet(dni);
+                        clienteDao.insertar(cliente);
+                        ewalletDao.insertar(ewallet);
+                        break;
+                    case 2:
+                        int aux = 0;
                         do {
-                            System.out.println("1. Registrarse como Cliente");
-                            System.out.println("2. Gestionar sus datos de Cliente");
+                            try {
+                                System.out.println("Introduzca su DNI para acceder: ");
+                                dni = teclado.nextLine();
+                                aux = 1;
+                            } catch (Exception e) {
+                                System.out.println("Su dni no pertenece a nungún cliente de nuestra BD");
+                                aux = 0;
+                            }
+                        } while (aux == 0);
+
+                        for (int i = 0; i < clientes.size(); i++) {
+                            if (clientes.get(i).getDni().equals(dni)) {
+                                cliente = clientes.get(i);
+                            }
+                        }
+
+                        for (int i = 0; i < ewallets.size(); i++) {
+                            if (ewallets.get(i).getDni().equals(dni)) {
+                                ewallet = ewallets.get(i);
+                            }
+                        }
+
+                        do {
+                            System.out.println("1. Gestionar perfil de Cliente");
+                            System.out.println("2. Gestionar E-Wallet");
                             System.out.println("3. Realizar una operación");
                             System.out.println("4. Salir");
                             op = teclado.nextInt();
                             teclado.nextLine();
-                            System.out.println();
 
                             switch (op) {
                                 case 1:
-                                    System.out.println("Introduzca su dni");
-                                    String dni = teclado.nextLine();
-                                    System.out.println("Introduzca su nombre");
-                                    String nombre = teclado.nextLine();
-                                    System.out.println("Introduzca sus apellidos");
-                                    String apellidos = teclado.nextLine();
-                                    System.out.println("Introduzca su fecha de nacimiento (dd-mm-aaaa)");
-                                    String sFecha = teclado.nextLine();
-                                    Date fechaN = (Date) formatter.parse(sFecha);
-                                    System.out.println("Introduzca su email");
-                                    String email = teclado.nextLine();
-                                    Cliente cliente = new Cliente(dni, nombre, apellidos, fechaN, email);
-                                    clienteDao.insertar(cliente);
-                                    break;
-                                case 2:
                                     do {
-                                        System.out.println("1. Gestionar perfil de Cliente");
-                                        System.out.println("2. Gestionar E-Wallet");
-                                        System.out.println("3. Salir");
+                                        System.out.println("1. Modificar datos Cliente");
+                                        System.out.println("2. Eliminar cuenta de cliente");
+                                        System.out.println("3. Ver sus datos de Cliente");
+                                        System.out.println("4.Salir");
                                         op = teclado.nextInt();
                                         teclado.nextLine();
-                                        System.out.println();
 
                                         switch (op) {
                                             case 1:
+                                                String seleccion;
                                                 do {
-                                                    System.out.println("1. Modificar datos Cliente");
-                                                    System.out.println("2. Eliminar cuenta de cliente");
-                                                    System.out.println("3. Ver sus datos de Cliente");
-                                                    System.out.println("4.Salir");
-                                                    op = teclado.nextInt();
-                                                    teclado.nextLine();
-                                                    System.out.println();
-
-                                                    switch (op) {
-                                                        case 1:
-
+                                                    System.out.println("Indique que quiere cambiar(nombre/apellidos/fechaNacimiento/email o nada)");
+                                                    seleccion = teclado.nextLine();
+                                                    switch (seleccion) {
+                                                        case "nombre":
+                                                            System.out.println("Introduzca nuevo nombre");
+                                                            nombre = teclado.nextLine();
+                                                            cliente.setNombre(nombre);
+                                                            clienteDao.actualizar(cliente);
                                                             break;
-                                                        case 2:
-
+                                                        case "apellidos":
+                                                            System.out.println("Introduzca los nuevos apellidos");
+                                                            apellidos = teclado.nextLine();
+                                                            cliente.setApellidos(apellidos);
+                                                            clienteDao.actualizar(cliente);
                                                             break;
-                                                        case 3:
-
-                                                        case 4:
-
-                                                        case 5:
-
+                                                        case "FechaNacimiento":
+                                                            System.out.println("Introduzca la nueva fecha de nacimiento (dd-mm-aaaa)");
+                                                            sFecha = teclado.nextLine();
+                                                            sFecha = simpleDateFormat.format(date);
+                                                            fechaN = java.sql.Date.valueOf(sFecha);
+                                                            cliente.setFechaNacimiento(fechaN);
+                                                            clienteDao.actualizar(cliente);
+                                                            break;
+                                                        case "email":
+                                                            System.out.println("Introduzca el nuevo email");
+                                                            email = teclado.nextLine();
+                                                            cliente.setEmail(email);
+                                                            clienteDao.actualizar(cliente);
+                                                            break;
                                                     }
-                                                } while (op != 4);
-
+                                                } while (!"nada".equals(seleccion));
                                                 break;
                                             case 2:
-
+                                                System.out.println("¿Estás seguro de querer eliminar la cuenta?(si/no)");
+                                                seleccion = teclado.nextLine();
+                                                if (seleccion.equals("si")) {
+                                                    clienteDao.eliminar(cliente);
+                                                    ewalletDao.eliminar(ewallet);
+                                                    System.out.println("Cuenta de cliente eliminada...");
+                                                    op = 4;
+                                                } else {
+                                                    System.out.println("Saliendo del menú de eliminar...");
+                                                    op = 4;
+                                                }
+                                                break;
+                                            case 3:
+                                                System.out.println(cliente);
                                                 break;
                                         }
-                                    } while (op != 3);
-
-                                    break;
-                                case 3:
-
-                                    break;
-                            }
-                        } while (op != 5);
-                        break;
-                    case 2:
-                        do {
-                            System.out.println("1. Insertar Propietario");
-                            System.out.println("2. Modificar Propietario");
-                            System.out.println("3. Eliminar Propietario y sus coches");
-                            System.out.println("4. Listar un propietario y su coche");
-                            System.out.println("5. Listar propietarios");
-                            System.out.println("6. Salir");
-                            op = teclado.nextInt();
-                            teclado.nextLine();
-                            System.out.println();
-
-                            switch (op) {
-                                case 1:
-
+                                    } while (op != 4);
+                                    dni = null;
                                     break;
                                 case 2:
-
+                                    do {
+                                        System.out.println("1. Ingresar dinero en la E-Wallet");
+                                        System.out.println("2. Ver datos de su E-Wallet");
+                                        System.out.println("3. Salir");
+                                        op = teclado.nextInt();
+                                        teclado.nextLine();
+                                        switch (op) {
+                                            case 1:
+                                                double dIngreso;
+                                                System.out.print("Introduzca el dinero a ingresar:");
+                                                dIngreso = teclado.nextDouble();
+                                                teclado.nextLine();
+                                                //System.out.println();
+                                                ewalletDao.ingresarDinero(dIngreso, ewallet, fechaActual);
+                                                break;
+                                            case 2:
+                                                System.out.println(ewallet);
+                                                break;
+                                        }
+                                    } while (op != 4);
                                     break;
                                 case 3:
+                                    do {
 
-                                case 4:
+                                        System.out.println("1. Comprar producto con dinero");
+                                        System.out.println("2. Comprar producto con puntos");
+                                        System.out.println("3. Devolver producto");
+                                        System.out.println("4. Salir");
+                                        op = teclado.nextInt();
+                                        teclado.nextLine();
+                                        int cantidad;
+                                        
 
-                                case 5:
-
+                                        switch (op) {
+                                            
+                                            case 1:
+                                                String prod;
+                                                System.out.println("Elige el producto a comprar");
+                                                System.out.println(nombreProductos);
+                                                prod = teclado.nextLine();
+                                                for (int i = 0; i < productos.size(); i++) {
+                                                    if (productos.get(i).getNombre().equals(prod)) {
+                                                        producto = productos.get(i);
+                                                    }
+                                                }
+                                                System.out.println("introduce la cantidad a comprar");
+                                                cantidad = teclado.nextInt();
+                                                teclado.nextLine();
+                                                
+                                                try {
+                                                    transaccionDao.comprarProducto(ewallet, producto, productoDao, ewalletDao, cantidad);
+                                                    System.out.println("Producto comprado, se ha actualizado el saldo de su E-Wallet.");
+                                                    conexion.commit();
+                                                } catch (SQLException e) {
+                                                    conexion.rollback();
+                                                    e.getMessage();
+                                                }
+                                                transaccion = new Transaccion(ewallet.getDni(), producto.getNombre(), fechaActual);
+                                                transaccionDao.insertar(transaccion);
+                                                break;
+                                            case 2:
+                                                System.out.println("Elige el producto a comprar");
+                                                System.out.println(nombreProductos);
+                                                prod = teclado.nextLine();
+                                                for (int i = 0; i < productos.size(); i++) {
+                                                    if (productos.get(i).getNombre().equals(prod)) {
+                                                        producto = productos.get(i);
+                                                    }
+                                                }
+                                                System.out.println("introduce la cantidad a comprar");
+                                                cantidad = teclado.nextInt();
+                                                teclado.nextLine();
+                                                
+                                                try {
+                                                    transaccionDao.comprarConPuntos(ewallet, producto, productoDao, ewalletDao, cantidad);
+                                                    System.out.println("Producto comprado, se han actualizado los puntos de su E-Wallet.");
+                                                    conexion.commit();
+                                                } catch (SQLException e) {
+                                                    conexion.rollback();
+                                                    e.getMessage();
+                                                }
+                                                transaccion = new Transaccion(ewallet.getDni(), producto.getNombre(), fechaActual);
+                                                transaccionDao.insertar(transaccion);
+                                                break;
+                                            case 3:
+                                                System.out.println("Elige el producto a devolver");
+                                                System.out.println(nombreProductos);
+                                                prod = teclado.nextLine();
+                                                for (int i = 0; i < productos.size(); i++) {
+                                                    if (productos.get(i).getNombre().equals(prod)) {
+                                                        producto = productos.get(i);
+                                                    }
+                                                }
+                                                System.out.println("introduce la cantidad a devolver");
+                                                cantidad = teclado.nextInt();
+                                                teclado.nextLine();
+                                                try{
+                                                    transaccionDao.devolverProducto(ewallet, producto, productoDao, ewalletDao, cantidad);
+                                                    System.out.println("Producto devuelto, se han actualizado los datos de su E-Wallet.");
+                                                    conexion.commit();
+                                                }catch (SQLException e) {
+                                                    conexion.rollback();
+                                                    e.getMessage();
+                                                } 
+                                                transaccion = new Transaccion(ewallet.getDni(), producto.getNombre(), fechaActual);
+                                                transaccionDao.insertar(transaccion);
+                                                break;
+                                        }
+                                    } while (op != 4);
+                                    break;
                             }
-                        } while (op != 6);
+                        } while (op != 4);
                         break;
                 }
-            } while (op != 4);
-        
-            /*
+            } while (op != 3);
+        } catch (SQLException e) {
+            e.printStackTrace(System.out);
+            System.out.println("Entramos en rollback");
+            try {
+                conexion.rollback();
+            } catch (SQLException e1) {
+                e1.printStackTrace(System.out);
+            }
+        }
+
+    }
+}
+
+/*
             Cliente c = new Cliente();
             c.setDni("16315638J");
             c.setNombre("Maria");
@@ -193,17 +344,3 @@ public class TestManejo {
                     ewallet = ewallets.get(i);
             }
             //ewalletDao.comprarProducto(ewallet, p, productoDao); */
-            
-            
-        }catch(SQLException e){
-            e.printStackTrace(System.out);
-            System.out.println("Entramos en rollback");
-            try{
-                conexion.rollback();
-            }catch(SQLException e1){
-                e1.printStackTrace(System.out);
-            }
-        }
-        
-    }
-}

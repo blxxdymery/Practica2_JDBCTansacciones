@@ -23,10 +23,8 @@ import java.util.List;
 public class ClienteDAO {
     private static final String SQL_SELECT = "SELECT * FROM clientes";
     private static final String SQL_INSERT = "INSERT INTO clientes (dni, nombre, apellidos, fechaNacimiento, email) VALUES (?,?,?,?,?)";
-    private static final String SQL_UPDATE = "UPDATE clientes SET dni=?, nombre=?, apellidos=?, fechaNacimiento=?, email=? WHERE dni=?";
+    private static final String SQL_UPDATE = "UPDATE clientes SET nombre=?, apellidos=?, fechaNacimiento=?, email=? WHERE dni=?";
     private static final String SQL_DELETE = "DELETE FROM clientes WHERE dni=?";
-    private static final String SQL_SELECT_DNI = "SELECT * FROM clientes where dni = ?";
-    //private static final String SQL_DELETE2 = "DELETE p.*, c.* FROM propietarios p LEFT JOIN coches c ON p.dni = c.dni WHERE p.dni=?";
     private Connection conexionTransaccional;
     
     public ClienteDAO(){}
@@ -96,10 +94,7 @@ public class ClienteDAO {
             stm.setString(5, cliente.getEmail());
             
             ewallet = new EWallet(cliente.getDni());
-            stm = con.prepareStatement(EWalletDAO.SQL_INSERT);
-            stm.setString(1, ewallet.getDni());
-            stm.setDouble(2, ewallet.getSaldo());
-            stm.setInt(3, ewallet.getPuntos());
+            EWalletDAO.insertar(ewallet);
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();
@@ -135,11 +130,11 @@ public class ClienteDAO {
                 this.conexionTransaccional : Conexion.getConnection();
             con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_UPDATE);
-            stm.setString(1, cliente.getDni());
-            stm.setString(2, cliente.getNombre());
-            stm.setString(3, cliente.getApellidos());
-            stm.setDate(4, cliente.getFechaNacimiento());
-            stm.setString(5, cliente.getEmail());
+            stm.setString(1, cliente.getNombre());
+            stm.setString(2, cliente.getApellidos());
+            stm.setDate(3, cliente.getFechaNacimiento());
+            stm.setString(4, cliente.getEmail());
+            stm.setString(5, cliente.getDni());
             registros = stm.executeUpdate();
             con.commit();
             con.rollback();
