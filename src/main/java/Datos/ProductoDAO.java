@@ -24,19 +24,24 @@ public class ProductoDAO {
     private static final String SQL_SELECT_NOMBRE = "SELECT nombre FROM productos";
     private static final String SQL_INSERT = "INSERT INTO productos (nombre, precio, valorPuntos, stock) VALUES (?,?,?,?)";
     private static final String SQL_UPDATE = "UPDATE productos SET precio=?, valorPuntos=?, stock=? WHERE nombre=?";
+    //private static final String SQL_UPDATE_STOCK = "UPDATE productos SET stock=? WHERE nombre=?";
     private static final String SQL_DELETE = "DELETE FROM productos WHERE nombre=?";
     private Connection conexionTransaccional;
     
     
     public ProductoDAO(){}
     
+    /**
+    * Constructor de ProductoDao con conexion como parametro
+     * @param conexionTransanccional  
+    */
     public ProductoDAO(Connection conexionTransanccional){
         this.conexionTransaccional = conexionTransanccional;
     }
     
     /**
-    * Método para consultas de select simples en propietarios
-    * @return la lista de propietarios que devuelve la consulta
+    * Método para consultas de select simples en productos
+    * @return la lista de productos que devuelve la consulta
     * @throws java.sql.SQLException 
     */
     public List<Producto> seleccionar() throws SQLException{
@@ -69,6 +74,11 @@ public class ProductoDAO {
         return productos;
     }
     
+    /**
+    * Método para sacar la lista de nombres de los productos
+    * @return la lista de nombres de los productos que devuelve la consulta
+    * @throws java.sql.SQLException 
+    */
     public List<String> seleccionarNombre() throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
@@ -96,8 +106,8 @@ public class ProductoDAO {
     }
     
     /**
-    * Método para insertar un propietario
-     * @param producto
+    * Método para insertar un producto
+     * @param producto el producto a insertar
     * @return el numero de registros
      * @throws java.sql.SQLException
     */
@@ -134,8 +144,8 @@ public class ProductoDAO {
     }
     
     /**
-    * Método para actualizar los datos de un propietario de la tabla
-     * @param producto
+    * Método para actualizar los datos de un producto de la tabla
+     * @param producto a actualizar
     * @return el numero de registros
     */
     public int actualizar(Producto producto){
@@ -145,7 +155,6 @@ public class ProductoDAO {
         
         try{
             con = Conexion.getConnection();
-            con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_UPDATE);
             stm.setDouble(1, producto.getPrecio());
             stm.setInt(2, producto.getValorPuntos());
@@ -166,10 +175,10 @@ public class ProductoDAO {
         }
         return registros; 
     }
-    
+ 
     /**
-    * Método para eliminar un propietario de la tabla junto a sus coches
-     * @param producto
+    * Método para eliminar un producto de la tabla
+     * @param producto producto a eliminar
     * @return el numero de registros
      * @throws java.sql.SQLException
     */
@@ -198,6 +207,5 @@ public class ProductoDAO {
         return registros;
     }
     
- 
 }
 

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Datos;
 
 import static Datos.Conexion.getConnection;
@@ -24,19 +19,24 @@ import java.util.List;
 public class TransaccionDAO {
     private static final String SQL_SELECT = "SELECT * FROM transacciones";
     static final String SQL_INSERT = "INSERT INTO transacciones (id, dni, nombreProducto, fecha) VALUES (?,?,?, ?)";
-    private static final String SQL_UPDATE = "UPDATE transacciones SET dni=?, nombreProducto=?, fecha=? WHERE id=?";
+    //private static final String SQL_UPDATE = "UPDATE transacciones SET dni=?, nombreProducto=?, fecha=? WHERE id=?"; NO QUEREMOS MODIFICAR UN REGISTRO DE COMPRA7DEVOLUCION
     private static final String SQL_DELETE = "DELETE FROM transacciones WHERE id=?";
     
     private Connection conexionTransaccional;
     
     public TransaccionDAO(){}
     
+    /**
+    * Constructor de TransaccionDao con conexion como parametro
+     * @param conexionTransanccional  
+    */
     public TransaccionDAO(Connection conexionTransanccional){
         this.conexionTransaccional = conexionTransanccional;
     }
+    
     /**
-    * Método para consultas de select simples en propietarios
-    * @return la lista de propietarios que devuelve la consulta
+    * Método para consultas de select simples en transacciones
+    * @return la lista de las transacciones realizadas
     * @throws java.sql.SQLException 
     */
     public List<Transaccion> seleccionar() throws SQLException{
@@ -69,10 +69,9 @@ public class TransaccionDAO {
         return transacciones;
     }
     
-    //REVISAR
     /**
-    * Método para insertar un propietario
-     * @param transaccion
+    * Método para insertar una transaccion
+     * @param transaccion transaccion a ingresar
     * @return el numero de registros
      * @throws java.sql.SQLException
     */
@@ -108,12 +107,9 @@ public class TransaccionDAO {
         return registros; 
     }
     
-    /**
-    * Método para actualizar los datos de un propietario de la tabla
-     * @param transaccion
-    * @return el numero de registros
-     * @throws java.sql.SQLException
-    */
+ 
+    /* No tiene sentido cambiar una transacción así que la comento
+    
     public int actualizar(Transaccion transaccion) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
@@ -141,7 +137,7 @@ public class TransaccionDAO {
             }
         }
         return registros;
-    }
+    }*/
     
     /**
     * Método para eliminar un propietario de la tabla junto a sus coches
@@ -174,40 +170,62 @@ public class TransaccionDAO {
         return registros;
     }
 
-    //PONER COMMIT
-    //acciones 1incrementar puntos 2.bajar euros 3. implementar stock, despues: commit
-    //se puede comprar mas de 1 art del mismo producto
+    /**
+    * Método para comprar un producto con dinero
+     * @param ewallet ewallet para la transaccion
+     * @param producto producto a comprar
+     * @param productoDao 
+     * @param ewalletDao
+     * @param cantidad cantidad de producto a comprar
+     * @throws java.sql.SQLException
+    */
     public void comprarProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad) throws Exception{
-        int nuevoStock;
         if(ewallet.getSaldo()<producto.getPrecio()){
             throw new Exception("El saldo de la E-Wallet es menor al precio del producto");
         }else{
             ewallet.setSaldo((ewallet.getSaldo()-(producto.getPrecio()*cantidad)));
             ewallet.setPuntos((ewallet.getPuntos()+(producto.getValorPuntos()*cantidad)));
-            producto.setStock((producto.getStock()-cantidad));
+            producto.setStock(Producto.restarStock(producto, cantidad));
             ewalletDao.actualizar(ewallet);
             productoDao.actualizar(producto);
             //se quitan los commits de los actualizar y se pone en el main
         }
     }
 
-    
-    public void devolverProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad){
+    /**
+    * Método para devolver un producto
+     * @param ewallet ewallet para la transaccion
+     * @param producto producto a devolver
+     * @param productoDao 
+     * @param ewalletDao
+     * @param cantidad cantidad de producto a devolver
+     * @throws java.sql.SQLException
+    */
+    public void devolverProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad) throws SQLException{
         ewallet.setSaldo((ewallet.getSaldo()+(producto.getPrecio()*cantidad)));
         ewallet.setPuntos((ewallet.getPuntos()-(producto.getValorPuntos()*cantidad)));
-        producto.setStock((producto.getStock()+cantidad));
+        producto.setStock(Producto.sumarStock(producto, cantidad));
         ewalletDao.actualizar(ewallet);
         productoDao.actualizar(producto);
         
     }
     
+    /**
+    * Método para comprar un producto con puntos de la ewallet
+     * @param ewallet ewallet para la transaccion
+     * @param producto producto a comprar
+     * @param productoDao 
+     * @param ewalletDao
+     * @param cantidad cantidad de producto a comprar
+     * @throws java.sql.SQLException
+    */
     public void comprarConPuntos(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad) throws Exception{
         double precioProducto = producto.getPrecio();
         if(ewallet.getPuntos()<producto.getValorPuntos() || precioProducto<5){
             throw new Exception("Error en la compra. No tienes suficientes puntos o el precio del producto es demasiado bajo.");
         }else{
             ewallet.setPuntos((ewallet.getPuntos()-(producto.getValorPuntos()*cantidad)));
-            producto.setStock((producto.getStock()-cantidad));
+            producto.setStock(Producto.restarStock(producto, cantidad));
             ewalletDao.actualizar(ewallet);
             productoDao.actualizar(producto);
             

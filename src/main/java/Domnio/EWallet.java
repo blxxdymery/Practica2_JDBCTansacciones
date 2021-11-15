@@ -6,7 +6,7 @@
 package Domnio;
 
 /**
- *
+ * Clase EWallet que corresponde a los datos de la tabla EWallets de nuestra BD
  * @author maria
  */
 public class EWallet {
@@ -16,7 +16,7 @@ public class EWallet {
 
     
     /**
-     * Constructor inicial de una E-Wallet de un cliente nuevo
+     * Constructor inicial de una E-Wallet de un cliente nuevo, se instancian los atributos a 0
      * @param dni dni del Cliente propietario de la e-wallet
      */
     public EWallet(String dni) {

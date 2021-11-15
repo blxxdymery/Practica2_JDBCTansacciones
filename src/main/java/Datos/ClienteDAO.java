@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Datos;
 
 import static Datos.Conexion.*;
@@ -24,19 +19,24 @@ public class ClienteDAO {
     private static final String SQL_SELECT = "SELECT * FROM clientes";
     private static final String SQL_INSERT = "INSERT INTO clientes (dni, nombre, apellidos, fechaNacimiento, email) VALUES (?,?,?,?,?)";
     private static final String SQL_UPDATE = "UPDATE clientes SET nombre=?, apellidos=?, fechaNacimiento=?, email=? WHERE dni=?";
-    private static final String SQL_DELETE = "DELETE FROM clientes WHERE dni=?";
+    //private static final String SQL_DELETE = "DELETE FROM clientes WHERE dni=?";
+    private static final String SQL_DELETE = "DELETE c.*, e.* FROM clientes c LEFT JOIN ewallets e ON c.dni = e.dni WHERE c.dni=?";
     private Connection conexionTransaccional;
     
     public ClienteDAO(){}
     
+    /**
+    * Constructor de ClienteDao con conexion como parametro
+     * @param conexionTransanccional  
+    */
     public ClienteDAO(Connection conexionTransanccional){
         this.conexionTransaccional = conexionTransanccional;
     }
     
     
     /**
-    * Método para consultas de select simples en propietarios
-    * @return la lista de propietarios que devuelve la consulta
+    * Método para consultas de select simples en la tabla Clientes
+    * @return la lista de clientes que devuelve la consulta
     * @throws java.sql.SQLException 
     */
     public List<Cliente> seleccionar() throws SQLException{
@@ -71,21 +71,18 @@ public class ClienteDAO {
     }
     
     /**
-    * Método para insertar un propietario
+    * Método para insertar un cliente que a la vez llama al insert de EWalletDAO
     * @param cliente a insertar
     * @return el numero de registros
-     * @throws java.sql.SQLException
     */
-    public int insertar(Cliente cliente) throws SQLException{
+    public int insertar(Cliente cliente){
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         EWallet ewallet;
         
         try{
-            con = this.conexionTransaccional != null ?
-                this.conexionTransaccional : Conexion.getConnection();
-            con.setAutoCommit(false);
+            con = Conexion.getConnection();
             stm = con.prepareStatement(SQL_INSERT);
             stm.setString(1, cliente.getDni());
             stm.setString(2, cliente.getNombre());
@@ -96,29 +93,25 @@ public class ClienteDAO {
             ewallet = new EWallet(cliente.getDni());
             EWalletDAO.insertar(ewallet);
             registros = stm.executeUpdate();
-            con.commit();
-            con.rollback();
-            System.out.println("Se ha registrado como cliente correctamente");
-        }finally{
-            try{
-                Conexion.close(stm);
-            }catch(SQLException e){
-                e.printStackTrace(System.out);
-            }try{
-                if(this.conexionTransaccional == null)
-                    Conexion.close(con);
-            }catch(SQLException e){
-                 e.printStackTrace(System.out);
+        }catch(SQLException e){
+            e.printStackTrace(System.out);
+        }
+        finally{
+            try {
+                close(stm);
+                close(con);
+            } catch (SQLException ex) {
+                ex.printStackTrace(System.out);
             }
-        }   
+        }
         return registros; 
     }
     
     /**
-    * Método para actualizar los datos de un propietario de la tabla
-    * @param cliente
+    * Método para actualizar los datos de un cliente de la tabla
+    * @param cliente a cambiar
     * @return el numero de registros
-     * @throws java.sql.SQLException
+    * @throws java.sql.SQLException
     */
     public int actualizar(Cliente cliente) throws SQLException{
         Connection con = null;
@@ -151,7 +144,7 @@ public class ClienteDAO {
     }
     
     /**
-    * Método para eliminar un propietario de la tabla junto a sus coches
+    * Método para eliminar un cliente de la tabla junto a su ewallet
     * @param cliente
     * @return el numero de registros
      * @throws java.sql.SQLException
@@ -180,5 +173,4 @@ public class ClienteDAO {
         }
         return registros;
     }
-   
 }

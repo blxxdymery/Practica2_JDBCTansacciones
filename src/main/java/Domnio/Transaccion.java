@@ -8,7 +8,7 @@ package Domnio;
 import java.sql.Date;
 
 /**
- *
+ * Clase Transaccion que corresponde a los datos de la tabla Transacciones de nuestra BD
  * @author maria
  */
 public class Transaccion {

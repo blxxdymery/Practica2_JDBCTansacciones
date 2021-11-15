@@ -1,12 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Domnio;
 
 /**
- *
+ *  Clase Producto que corresponde a los datos de la tabla Productos de nuestra BD
  * @author maria
  */
 public class Producto {
@@ -59,15 +54,24 @@ public class Producto {
         return "Producto{" + "nombre=" + nombre + ", precio=" + precio + ", valorPuntos=" + valorPuntos + ", stock=" + stock + '}';
     }
     
-    public static int restarStock(Producto p, int c){
-        /*if(p.getStock()<=0){
-             throw new Exception("No hay suficiente stock en el almacén");
-        }else{*/
-            int nuevoStock = (p.getStock())-c;
-            return nuevoStock;
-        //}
+    /**
+     * Método que resta stock al comprar un producto
+     * @param p el producto al que restar stock
+     * @param c la cantidad de stock a restar
+     * @return devuelve el stock actual
+     */
+    public static int restarStock(Producto p, int c) {
+        int nuevoStock = (p.getStock()) - c;
+        return nuevoStock;
+
     }
     
+    /**
+     * Método que suma stock al devolver un producto
+     * @param p el producto al que sumar stock
+     * @param c la cantidad de stock a sumar
+     * @return devuelve el stock actual
+     */
     public static int sumarStock(Producto p, int c){
         int nuevoStock = (p.getStock())+c;
         return nuevoStock;

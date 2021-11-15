@@ -32,12 +32,16 @@ public class EWalletDAO {
     
     public EWalletDAO(){}
     
+    /**
+    * Constructor de EWalletDao con conexion como parametro
+     * @param conexionTransanccional  
+    */
     public EWalletDAO(Connection conexionTransanccional){
         this.conexionTransaccional = conexionTransanccional;
     }
     /**
-    * Método para consultas de select simples en propietarios
-    * @return la lista de propietarios que devuelve la consulta
+    * Método para consultas de select simples en ewallets
+    * @return la lista de ewallets que devuelve la consulta
     * @throws java.sql.SQLException 
     */
     public List<EWallet> seleccionar() throws SQLException{
@@ -69,22 +73,18 @@ public class EWalletDAO {
         return ewallets;
     }
     
-    //REVISAR
     /**
-    * Método para insertar un propietario
+    * Método para insertar una ewallet, es llamada al crear un cliente
      * @param ewallet
     * @return el numero de registros
-     * @throws java.sql.SQLException
     */
     public static int insertar(EWallet ewallet){
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
-        String dni;
         
         try{
             con = Conexion.getConnection();
-            con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_INSERT);
             stm.setString(1, ewallet.getDni());
             stm.setDouble(2, ewallet.getSaldo());
@@ -104,33 +104,33 @@ public class EWalletDAO {
         return registros; 
     }
     
-    /**            con.setAutoCommit(false);
-
-    * Método para actualizar los datos de un propietario de la tabla
+    /** 
+    * Método para actualizar los datos de una ewallet de la tabla
      * @param ewallet
     * @return el numero de registros
+     * @throws java.sql.SQLException
     */
-    public int actualizar(EWallet ewallet){
+    public int actualizar(EWallet ewallet) throws SQLException{
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         
         try{
-            con = Conexion.getConnection();
+            con = this.conexionTransaccional != null ?
+                this.conexionTransaccional : Conexion.getConnection();
+            con.setAutoCommit(false);
             stm = con.prepareStatement(SQL_UPDATE);        
             stm.setDouble(1, ewallet.getSaldo());
             stm.setInt(2, ewallet.getPuntos());
             stm.setString(3, ewallet.getDni());
             registros = stm.executeUpdate();
-            //con.commit();
-            //con.rollback();
-        }catch(SQLException e){
-            e.printStackTrace(System.out);
-        }
-        finally{
+            con.commit();
+            con.rollback();
+        }finally{
             try {
-                close(stm);
-                close(con);
+                Conexion.close(stm);
+                if(this.conexionTransaccional == null)
+                    Conexion.close(con);
             } catch (SQLException ex) {
                 ex.printStackTrace(System.out);
             }
@@ -139,7 +139,7 @@ public class EWalletDAO {
     }
     
     /**
-    * Método para eliminar un propietario de la tabla junto a sus coches
+    * Método para eliminar una ewallet de la tabla
      * @param ewallet
     * @return el numero de registros
      * @throws java.sql.SQLException
@@ -169,6 +169,13 @@ public class EWalletDAO {
         return registros;
     }
     
+    /**
+    * Método para ingresar saldo en la ewallet
+     * @param dinero dinero a ingresar
+     * @param ewallet ewallet en la que se ingresa
+     * @param fechaActual fecha de la transacción
+     * @throws java.sql.SQLException
+    */
     public void ingresarDinero(double dinero, EWallet ewallet, Date fechaActual) throws SQLException, Exception{
         int dia = sacarDiaFecha(fechaActual);
         if(dia>=1 && dia<=5){
@@ -180,14 +187,16 @@ public class EWalletDAO {
         }   
     }
 
+    /**
+    * Método para sacar el día de la fecha actual
+    * @param date la fecha completa
+    * @return el numero de registros
+    */
     public int sacarDiaFecha(Date date){
         LocalDate currentDate = LocalDate.parse(date.toString());
         int day = currentDate.getDayOfMonth();
         return day;
     }
 
-    public void ingresarDinero(double dIngreso, EWallet ewallet, java.util.Date fechaActual) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
  
 }
