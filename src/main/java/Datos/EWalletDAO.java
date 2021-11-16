@@ -108,29 +108,28 @@ public class EWalletDAO {
     * Método para actualizar los datos de una ewallet de la tabla
      * @param ewallet
     * @return el numero de registros
-     * @throws java.sql.SQLException
     */
-    public int actualizar(EWallet ewallet) throws SQLException{
+    public int actualizar(EWallet ewallet){
         Connection con = null;
         PreparedStatement stm = null;
         int registros = 0;
         
         try{
-            con = this.conexionTransaccional != null ?
-                this.conexionTransaccional : Conexion.getConnection();
-            con.setAutoCommit(false);
+            con = Conexion.getConnection();
             stm = con.prepareStatement(SQL_UPDATE);        
             stm.setDouble(1, ewallet.getSaldo());
             stm.setInt(2, ewallet.getPuntos());
             stm.setString(3, ewallet.getDni());
             registros = stm.executeUpdate();
-            con.commit();
-            con.rollback();
-        }finally{
+            //con.commit();
+            //con.rollback();
+        }catch(SQLException e){
+            e.printStackTrace(System.out);
+        }
+        finally{
             try {
-                Conexion.close(stm);
-                if(this.conexionTransaccional == null)
-                    Conexion.close(con);
+                close(stm);
+                close(con);
             } catch (SQLException ex) {
                 ex.printStackTrace(System.out);
             }

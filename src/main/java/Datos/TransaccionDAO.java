@@ -199,9 +199,8 @@ public class TransaccionDAO {
      * @param productoDao 
      * @param ewalletDao
      * @param cantidad cantidad de producto a devolver
-     * @throws java.sql.SQLException
     */
-    public void devolverProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad) throws SQLException{
+    public void devolverProducto(EWallet ewallet, Producto producto, ProductoDAO productoDao, EWalletDAO ewalletDao, int cantidad){
         ewallet.setSaldo((ewallet.getSaldo()+(producto.getPrecio()*cantidad)));
         ewallet.setPuntos((ewallet.getPuntos()-(producto.getValorPuntos()*cantidad)));
         producto.setStock(Producto.sumarStock(producto, cantidad));

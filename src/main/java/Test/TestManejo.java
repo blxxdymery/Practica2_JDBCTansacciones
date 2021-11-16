@@ -95,6 +95,7 @@ public class TestManejo {
                             conexion.commit();
                         } catch (SQLException e) {
                             conexion.rollback();
+                            System.out.println("Error creando el perfil de cliente y su e-wallet");
                             e.getMessage();
                         }
                         System.out.println();
